@@ -1,52 +1,26 @@
-# FROM python:3.11-slim
+# 1. Base image
+FROM python:3.10-slim
 
-# # Set working directory
-# WORKDIR /app
-
-# # Copy requirements and install dependencies
-# COPY requirements.txt .
-# RUN pip3 install --default-timeout=100 --no-cache-dir -r requirements.txt
-
-# # Copy the rest of the application
-# COPY . .
-
-# # Expose Django default port
-# EXPOSE 8000
-
-# # Run the application
-# CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
-
-
-FROM python:3.11-slim
-
-# Install system dependencies required for Pillow
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    gcc \
-    libjpeg62-turbo-dev \
-    zlib1g-dev \
-    libpng-dev \
-    libfreetype6-dev \
-    liblcms2-dev \
-    libopenjp2-7-dev \
-    libtiff5-dev \
-    tk-dev \
-    libwebp-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
+# 2. Set working directory
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+# 3. Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy the rest of the application
+# 4. Copy dependency list first to use Docker layer caching
+COPY requirements.txt .
+
+# 5. Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 6. Copy the entire Django project
 COPY . .
 
-# Expose Django port
+# 7. Expose Django's default port (optional)
 EXPOSE 8000
 
-# Run the application
-CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
-
+# 8. Run the Django development server
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
